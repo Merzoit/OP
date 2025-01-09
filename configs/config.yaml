@@ -1,0 +1,8 @@
+app:
+  port: 8080
+database:
+  host: "81.200.146.22"
+  port: 5432
+  user: "gen_user"
+  password: "fbjx%5CBn%2Cm%7B6M3%2C"
+  dbname: "default_db"
