@@ -2,6 +2,8 @@ package main
 
 import (
 	"at/internal/services/code"
+	"at/internal/services/reflink"
+	"at/internal/services/role"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -49,6 +51,12 @@ func main() {
 
 	codeRepo := code.NewPgCodeRepository(db)
 	codeController := code.NewCodeController(codeRepo)
+
+	reflinkRepo := reflink.NewPgReflinkRepository(db)
+	reflinkController := reflink.NewRefLinkController(reflinkRepo)
+
+	roleRepo := role.NewPgRoleRepository(db)
+	roleController := role.NewRoleController(roleRepo)
 	/*
 		sponsorRepo := sponsor.NewPgSponsorRepository(db)
 		sponsorController := sponsor.NewSponsorController(sponsorRepo)
@@ -67,6 +75,8 @@ func main() {
 	router := mux.NewRouter()
 	routers.RegisterUserRoutes(router, userController)
 	routers.RegisterCodeRoutes(router, codeController)
+	routers.RegisterReflinkRoutes(router, reflinkController)
+	routers.RegisterRoleRoutes(router, roleController)
 	//routers.RegisterSponsorRoutes(router, sponsorController)
 
 	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", config.App.Port), router)).Msg("HTTP server stopped")

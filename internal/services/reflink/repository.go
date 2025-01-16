@@ -31,7 +31,7 @@ func (repo *PgReflinkRepository) CreateLink(link *ReferralLink) error {
 
 	query := `
 	INSERT INTO referral_links (worker_id, referral_link)
-	VALUES ($1, $2, $3, $4, $5)
+	VALUES ($1, $2)
 	RETURNING id
 	`
 
@@ -110,7 +110,7 @@ func (repo *PgReflinkRepository) ClickAdd(workerID int, count int) error {
 	query := `
 	UPDATE referral_links
 	SET clicks = clicks + $1
-	WHERE workerID = $2
+	WHERE worker_id = $2
 	`
 
 	link, err := repo.db.Exec(context.Background(), query, count, workerID)
@@ -131,7 +131,7 @@ func (repo *PgReflinkRepository) RegistrationAdd(workerID int, count int) error 
 	query := `
 	UPDATE referral_links
 	SET registrations = registrations + $1
-	WHERE id = $2
+	WHERE worker_id = $2
 	`
 
 	link, err := repo.db.Exec(context.Background(), query, count, workerID)

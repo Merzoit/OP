@@ -137,7 +137,7 @@ func (repo *PgCodeRepository) DeleteCode(code int) error {
 	query := `
 	DELETE 
 	FROM codes 
-	WHERE code=$1
+	WHERE access_code=$1
 	`
 
 	log.Info().Msgf(constants.CallRepoDeleteCode, code)
@@ -158,13 +158,13 @@ func (repo *PgCodeRepository) AddRequestCount(accessCode, i int) error {
 	WHERE access_code = $1
 	`
 
-	cmdTag, err := repo.db.Exec(context.Background(), query, accessCode, i)
+	code, err := repo.db.Exec(context.Background(), query, accessCode, i)
 	if err != nil {
 		log.Error().Err(err).Msg(constants.ErrCodeRequestCounter)
 		return fmt.Errorf(constants.ErrCodeRequestCounter)
 	}
 
-	if cmdTag.RowsAffected() == 0 {
+	if code.RowsAffected() == 0 {
 		log.Error().Err(err).Msg(constants.ErrCodeNotFound)
 		return fmt.Errorf(constants.ErrCodeNotFound)
 	}
