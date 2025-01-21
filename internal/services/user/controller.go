@@ -66,3 +66,35 @@ func (uc *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	log.Info().Msg(constants.CallControllerGetUserById)
 }
+
+func (uc *UserController) BanUser(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		TelegramID uint64 `json:"telegram_id"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		log.Error().Err(err).Msg(constants.ErrDecodingRequestBody)
+		http.Error(w, constants.ErrDecodingRequestBody, http.StatusBadRequest)
+		return
+	}
+
+	if payload.TelegramID == 0 {
+		log.Error().Msg(constants.ErrUserBanned)
+		http.Error(w, constants.ErrUserBanned, http.StatusBadRequest)
+		return
+	}
+
+	err = uc.userRepo.BanUser(payload.TelegramID)
+	if err != nil {
+		if err.Error() == constants.ErrUserNotFound {
+			log.Error().Err(err).Msg(constants.ErrUserNotFound)
+			http.Error(w, constants.ErrUserNotFound, http.StatusNotFound)
+			return
+		}
+
+		log.Error().Err(err).Msg(constants.ErrUserBanned)
+		http.Error(w, constants.ErrUserBanned, http.StatusInternalServerError)
+		return
+	}
+}

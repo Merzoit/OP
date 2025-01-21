@@ -4,6 +4,8 @@ import (
 	"at/internal/services/code"
 	"at/internal/services/reflink"
 	"at/internal/services/role"
+	"at/internal/services/sponsor"
+	"at/internal/services/subscribe"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -57,10 +59,12 @@ func main() {
 
 	roleRepo := role.NewPgRoleRepository(db)
 	roleController := role.NewRoleController(roleRepo)
-	/*
-		sponsorRepo := sponsor.NewPgSponsorRepository(db)
-		sponsorController := sponsor.NewSponsorController(sponsorRepo)
-	*/
+
+	sponsorRepo := sponsor.NewPgSponsorRepository(db)
+	sponsorController := sponsor.NewSponsorController(sponsorRepo)
+
+	subRepo := subscribe.NewPgSubscribeRepository(db)
+	subController := subscribe.NewSubscribeController(subRepo)
 	//ts.TestDbSponsorCreate(db)
 	//ts.TestDbSponsorsGet(db)
 	//tc.TestDbCodeDelete(db)
@@ -77,7 +81,8 @@ func main() {
 	routers.RegisterCodeRoutes(router, codeController)
 	routers.RegisterReflinkRoutes(router, reflinkController)
 	routers.RegisterRoleRoutes(router, roleController)
-	//routers.RegisterSponsorRoutes(router, sponsorController)
+	routers.RegisterSponsorRoutes(router, sponsorController)
+	routers.RegisterSubscribeRoutes(router, subController)
 
 	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", config.App.Port), router)).Msg("HTTP server stopped")
 }

@@ -27,15 +27,14 @@ func NewPgSponsorRepository(db *pgxpool.Pool) SponsorRepository {
 func (repo *PgSponsorRepository) CreateSponsor(sponsor *Sponsor) error {
 	query := `
 	INSERT INTO sponsors 
-	(telegram_id, telegram_link, price_per_sub, name)
-	VALUES ($1, $2, $3, $4)
+	(telegram_link, price_per_sub, name)
+	VALUES ($1, $2, $3)
 	RETURNING id
 	`
 
 	err := repo.db.QueryRow(
 		context.Background(),
 		query,
-		sponsor.TelegramID,
 		sponsor.TelegramLink,
 		sponsor.PricePerSub,
 		sponsor.Name,
@@ -53,14 +52,13 @@ func (repo *PgSponsorRepository) GetSponsor(tid uint64) (*Sponsor, error) {
 	sponsor := &Sponsor{}
 
 	query := `
-	SELECT id, telegram_id, telegram_link, price_per_sub, name, created_at
+	SELECT id, telegram_link, price_per_sub, name, created_at
 	FROM sponsors
-	WHERE telegram_id = $1
+	WHERE id = $1
 	`
 
 	err := repo.db.QueryRow(context.Background(), query, tid).Scan(
 		&sponsor.ID,
-		&sponsor.TelegramID,
 		&sponsor.TelegramLink,
 		&sponsor.PricePerSub,
 		&sponsor.Name,
@@ -83,7 +81,7 @@ func (repo *PgSponsorRepository) GetSponsor(tid uint64) (*Sponsor, error) {
 func (repo *PgSponsorRepository) DeleteSponsor(tid uint64) error {
 	query := `
 	DELETE FROM sponsors
-	WHERE telegram_id = $1
+	WHERE id = $1
 	`
 
 	sponsor, err := repo.db.Exec(context.Background(), query, tid)
@@ -102,7 +100,7 @@ func (repo *PgSponsorRepository) DeleteSponsor(tid uint64) error {
 
 func (repo *PgSponsorRepository) GetSponsors() ([]*Sponsor, error) {
 	query := `
-	SELECT id, telegram_id, telegram_link, price_per_sub, name, created_at
+	SELECT id, telegram_link, price_per_sub, name, created_at
 	FROM sponsors
 	`
 
@@ -118,7 +116,6 @@ func (repo *PgSponsorRepository) GetSponsors() ([]*Sponsor, error) {
 		sponsor := &Sponsor{}
 		err := rows.Scan(
 			&sponsor.ID,
-			&sponsor.TelegramID,
 			&sponsor.TelegramLink,
 			&sponsor.PricePerSub,
 			&sponsor.Name,

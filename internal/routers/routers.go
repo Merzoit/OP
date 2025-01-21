@@ -5,6 +5,7 @@ import (
 	"at/internal/services/reflink"
 	"at/internal/services/role"
 	"at/internal/services/sponsor"
+	"at/internal/services/subscribe"
 	user "at/internal/services/user"
 	"net/http"
 
@@ -39,6 +40,7 @@ func RegisterRoleRoutes(router *mux.Router, controller *role.RoleController) {
 	rrr := router.PathPrefix("/api/role").Subrouter()
 	rrr.HandleFunc("/{roleID}", controller.GetRole).Methods("GET")
 }
+
 func RegisterSponsorRoutes(router *mux.Router, sc *sponsor.SponsorController) {
 	sr := router.PathPrefix("/api/sponsor").Subrouter()
 	sr.HandleFunc("", sc.CreateSponsor).Methods(http.MethodPost)
@@ -47,6 +49,12 @@ func RegisterSponsorRoutes(router *mux.Router, sc *sponsor.SponsorController) {
 	sr.HandleFunc("/{id}", sc.DeleteSponsor).Methods(http.MethodDelete)
 }
 
+func RegisterSubscribeRoutes(router *mux.Router, controller *subscribe.SubscribeController) {
+	rsr := router.PathPrefix("/api/subscribe").Subrouter()
+	rsr.HandleFunc("", controller.AddSubscribe).Methods("POST")
+	rsr.HandleFunc("/user/{id}", controller.GetSubscribesByUser).Methods("GET")
+	rsr.HandleFunc("/sponsor/{id}", controller.GetSubscribesBySponsor).Methods("GET")
+}
 func InitRouter(userController *user.UserController) *mux.Router {
 	router := mux.NewRouter()
 	RegisterUserRoutes(router, userController)

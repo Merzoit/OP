@@ -24,7 +24,7 @@ func NewPgSubscribeRepository(db *pgxpool.Pool) SubscribeRepository {
 
 func (repo *PgSubscribeRepository) AddSubscribe(sub *Subscribe) error {
 	query := `
-	INSERT INTO subscribes (user_id, sponsor_id)
+	INSERT INTO subscriptions (user_id, sponsor_id)
 	VALUES ($1, $2)
 	RETURNING id
 	`
@@ -47,7 +47,7 @@ func (repo *PgSubscribeRepository) AddSubscribe(sub *Subscribe) error {
 func (repo *PgSubscribeRepository) GetSubscribesByUser(userID uint) ([]*Subscribe, error) {
 	query := `
 	SELECT id, user_id, sponsor_id, subscribed_at
-	FROM subscribes
+	FROM subscriptions
 	WHERE user_id = $1
 	`
 
@@ -85,7 +85,7 @@ func (repo *PgSubscribeRepository) GetSubscribesByUser(userID uint) ([]*Subscrib
 func (repo *PgSubscribeRepository) GetSubscribesBySponsor(sponsorID uint) ([]*Subscribe, error) {
 	query := `
 	SELECT id, user_id, sponsor_id, subscribed_at
-	FROM subscribes
+	FROM subscriptions
 	WHERE sponsor_id = $1
 	`
 

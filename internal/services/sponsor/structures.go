@@ -4,7 +4,6 @@ import "time"
 
 type Sponsor struct {
 	ID           int       `json:"id"`
-	TelegramID   uint64    `json:"telegram_id"`
 	TelegramLink string    `json:"telegram_link"`
 	PricePerSub  float64   `json:"price_per_sub"`
 	Name         string    `json:"name"`
