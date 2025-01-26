@@ -29,7 +29,7 @@ func (repo *PgUserRepository) GetUser(tid uint64) (*User, error) {
 	query := `
 	SELECT id, telegram_id, username, role_id, is_banned, created_at
 	FROM users 
-	WHERE tid=$1
+	WHERE telegram_id=$1
 	`
 
 	log.Info().Msgf(constants.CallRepoGetUserById, tid)
