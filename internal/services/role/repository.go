@@ -1,7 +1,7 @@
 package role
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"database/sql"
 	"fmt"
@@ -38,11 +38,11 @@ func (repo *PgRoleRepository) GetRole(roleID uint) (*Role, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Error().Err(err).Msg(constants.ErrRoleNotFound)
-			return nil, fmt.Errorf(constants.ErrRoleNotFound)
+			log.Warn().Err(err).Msg(errors.ErrRoleNotFound)
+			return nil, fmt.Errorf(errors.ErrRoleNotFound)
 		}
-		log.Error().Err(err).Msg(constants.ErrRoleFetching)
-		return nil, fmt.Errorf(constants.ErrRoleFetching)
+		log.Warn().Err(err).Msg(errors.ErrRoleFetching)
+		return nil, fmt.Errorf(errors.ErrRoleFetching)
 	}
 
 	return role, nil

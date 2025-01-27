@@ -1,13 +1,15 @@
-package constants
+package errors
 
 const (
 	//CONFIG
 
-	ErrConfigValidate        = "configuration validation failed"
-	ErrConfigValidateAppPort = "app port is not specified"
-	ErrConfigValidateDbHost  = "database host or name is not specified"
-	ErrConfigLoad            = "failed to load configuration"
-
+	ErrConfigValidate           = "configuration validation failed"
+	ErrConfigValidateAppPort    = "app port is not specified"
+	ErrConfigValidateDbHost     = "database host or name is not specified"
+	ErrConfigLoad               = "failed to load configuration"
+	ErrEnvLoading               = "failed loading environment"
+	ErrConnectionString         = "failed to load connection string from environment"
+	ErrConnectionStringValidate = "connection string validation failed"
 	//DB
 
 	ErrDbParseConfig = "failed to parse database config"

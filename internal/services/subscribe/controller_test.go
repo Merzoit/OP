@@ -1,6 +1,7 @@
-package test
+package subscribe
 
 import (
+	"at/test"
 	"fmt"
 	"net/http"
 	"testing"
@@ -9,7 +10,7 @@ import (
 const subscribeBaseURL = "http://localhost:8080/api/subscribe"
 
 func TestSubscribeAPI(t *testing.T) {
-	tests := []TestResult{
+	tests := []test.TestResult{
 		testAddSubscribe(),
 		testGetSubscribesByUser(2),
 		testGetSubscribesBySponsor(1),
@@ -25,21 +26,21 @@ func TestSubscribeAPI(t *testing.T) {
 	}
 }
 
-func testAddSubscribe() TestResult {
-	endpoint := fmt.Sprintf("%s", subscribeBaseURL)
+func testAddSubscribe() test.TestResult {
+	endpoint := fmt.Sprintf("%s/create", subscribeBaseURL)
 	payload := map[string]interface{}{
-		"user_id":    1,
+		"user_id":    19,
 		"sponsor_id": 2,
 	}
-	return sendRequest(http.MethodPost, endpoint, payload)
+	return test.SendRequest(http.MethodPost, endpoint, payload)
 }
 
-func testGetSubscribesByUser(userID int) TestResult {
+func testGetSubscribesByUser(userID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/user/%d", subscribeBaseURL, userID)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testGetSubscribesBySponsor(sponsorID int) TestResult {
+func testGetSubscribesBySponsor(sponsorID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/sponsor/%d", subscribeBaseURL, sponsorID)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }

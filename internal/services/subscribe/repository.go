@@ -1,15 +1,16 @@
 package subscribe
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )
 
 type SubscribeRepository interface {
-	AddSubscribe(sub *Subscribe) error
+	AddSubscribe(sub *Subscribe) (*Subscribe, error)
 	GetSubscribesByUser(userID uint) ([]*Subscribe, error)
 	GetSubscribesBySponsor(sponsorID uint) ([]*Subscribe, error)
 }
@@ -22,26 +23,52 @@ func NewPgSubscribeRepository(db *pgxpool.Pool) SubscribeRepository {
 	return &PgSubscribeRepository{db: db}
 }
 
-func (repo *PgSubscribeRepository) AddSubscribe(sub *Subscribe) error {
-	query := `
-	INSERT INTO subscriptions (user_id, sponsor_id)
-	VALUES ($1, $2)
-	RETURNING id
-	`
-
-	err := repo.db.QueryRow(
-		context.Background(),
-		query,
-		sub.UserID,
-		sub.SponsorID,
-	).Scan(&sub.ID)
-
+func (repo *PgSubscribeRepository) AddSubscribe(sub *Subscribe) (*Subscribe, error) {
+	tx, err := repo.db.Begin(context.Background())
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSubscribeCreate)
-		return fmt.Errorf(constants.ErrSubscribeCreate)
+		log.Error().Err(err).Msg("Failed to begin transaction")
+		return nil, err
+	}
+	defer tx.Rollback(context.Background())
+
+	checkQuery := `
+	SELECT id FROM subscriptions
+	WHERE user_id = $1 AND sponsor_id = $2
+	`
+	var existingID int
+	err = tx.QueryRow(context.Background(), checkQuery, sub.UserID, sub.SponsorID).Scan(&existingID)
+
+	if err == nil {
+		log.Warn().Msgf("Subscription already exists for user_id=%d and sponsor_id=%d", sub.UserID, sub.SponsorID)
+		return nil, fmt.Errorf("subscription already exists")
+	} else if err != pgx.ErrNoRows {
+		log.Error().Err(err).Msg("Error checking existing subscription")
+		return nil, err
 	}
 
-	return nil
+	insertQuery := `
+	INSERT INTO subscriptions (user_id, sponsor_id)
+	VALUES ($1, $2)
+	RETURNING id, user_id, sponsor_id, subscribed_at
+	`
+	err = tx.QueryRow(context.Background(), insertQuery, sub.UserID, sub.SponsorID).Scan(
+		&sub.ID,
+		&sub.UserID,
+		&sub.SponsorID,
+		&sub.SubscribedAt,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting subscription")
+		return nil, err
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to commit transaction")
+		return nil, err
+	}
+
+	return sub, nil
 }
 
 func (repo *PgSubscribeRepository) GetSubscribesByUser(userID uint) ([]*Subscribe, error) {
@@ -53,8 +80,8 @@ func (repo *PgSubscribeRepository) GetSubscribesByUser(userID uint) ([]*Subscrib
 
 	rows, err := repo.db.Query(context.Background(), query, userID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSubscribesByUser)
-		return nil, fmt.Errorf(constants.ErrSubscribesByUser)
+		log.Warn().Err(err).Msg(errors.ErrSubscribesByUser)
+		return nil, fmt.Errorf(errors.ErrSubscribesByUser)
 	}
 	defer rows.Close()
 
@@ -68,15 +95,15 @@ func (repo *PgSubscribeRepository) GetSubscribesByUser(userID uint) ([]*Subscrib
 			&sub.SubscribedAt,
 		)
 		if err != nil {
-			log.Error().Err(err).Msg(constants.ErrSubscribeScan)
-			return nil, fmt.Errorf(constants.ErrSubscribeScan)
+			log.Warn().Err(err).Msg(errors.ErrSubscribeScan)
+			return nil, fmt.Errorf(errors.ErrSubscribeScan)
 		}
 		subscribes = append(subscribes, sub)
 	}
 
 	if rows.Err() != nil {
-		log.Error().Err(rows.Err()).Msg(constants.ErrSubscribeIterate)
-		return nil, fmt.Errorf(constants.ErrSubscribeIterate)
+		log.Warn().Err(rows.Err()).Msg(errors.ErrSubscribeIterate)
+		return nil, fmt.Errorf(errors.ErrSubscribeIterate)
 	}
 
 	return subscribes, nil
@@ -91,8 +118,8 @@ func (repo *PgSubscribeRepository) GetSubscribesBySponsor(sponsorID uint) ([]*Su
 
 	rows, err := repo.db.Query(context.Background(), query, sponsorID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSubscribesBySponsor)
-		return nil, fmt.Errorf(constants.ErrSubscribesBySponsor)
+		log.Warn().Err(err).Msg(errors.ErrSubscribesBySponsor)
+		return nil, fmt.Errorf(errors.ErrSubscribesBySponsor)
 	}
 	defer rows.Close()
 
@@ -106,15 +133,15 @@ func (repo *PgSubscribeRepository) GetSubscribesBySponsor(sponsorID uint) ([]*Su
 			&sub.SubscribedAt,
 		)
 		if err != nil {
-			log.Error().Err(err).Msg(constants.ErrSubscribeScan)
-			return nil, fmt.Errorf(constants.ErrSubscribeScan)
+			log.Warn().Err(err).Msg(errors.ErrSubscribeScan)
+			return nil, fmt.Errorf(errors.ErrSubscribeScan)
 		}
 		subscribes = append(subscribes, sub)
 	}
 
 	if rows.Err() != nil {
-		log.Error().Err(rows.Err()).Msg(constants.ErrSubscribeIterate)
-		return nil, fmt.Errorf(constants.ErrSubscribeIterate)
+		log.Warn().Err(rows.Err()).Msg(errors.ErrSubscribeIterate)
+		return nil, fmt.Errorf(errors.ErrSubscribeIterate)
 	}
 
 	return subscribes, nil

@@ -1,6 +1,7 @@
-package test
+package code
 
 import (
+	"at/test"
 	"fmt"
 	"net/http"
 	"testing"
@@ -10,7 +11,7 @@ const codeBaseURL = "http://localhost:8080/api/code"
 
 func TestCodeAPI(t *testing.T) {
 	// Список тестов
-	tests := []TestResult{
+	tests := []test.TestResult{
 		testCreateCode(),
 		testGetCode(12345),
 		testGetCodesByWorker(2),
@@ -29,7 +30,7 @@ func TestCodeAPI(t *testing.T) {
 	}
 }
 
-func testCreateCode() TestResult {
+func testCreateCode() test.TestResult {
 	endpoint := fmt.Sprintf("%s", codeBaseURL)
 	payload := map[string]interface{}{
 		"access_code":        12345,
@@ -39,28 +40,28 @@ func testCreateCode() TestResult {
 		"added_by_worker_id": 2,
 		"request_count":      0,
 	}
-	return sendRequest(http.MethodPost, endpoint, payload)
+	return test.SendRequest(http.MethodPost, endpoint, payload)
 }
 
-func testGetCode(accessCode int) TestResult {
+func testGetCode(accessCode int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", codeBaseURL, accessCode)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testAddRequestCount(accessCode int) TestResult {
+func testAddRequestCount(accessCode int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/increment/%d", codeBaseURL, accessCode)
 	payload := map[string]interface{}{
 		"increment": 5,
 	}
-	return sendRequest(http.MethodPatch, endpoint, payload)
+	return test.SendRequest(http.MethodPatch, endpoint, payload)
 }
 
-func testGetCodesByWorker(workerID int) TestResult {
+func testGetCodesByWorker(workerID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/worker/%d", codeBaseURL, workerID)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testDeleteCode(accessCode int) TestResult {
+func testDeleteCode(accessCode int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", codeBaseURL, accessCode)
-	return sendRequest(http.MethodDelete, endpoint, nil)
+	return test.SendRequest(http.MethodDelete, endpoint, nil)
 }

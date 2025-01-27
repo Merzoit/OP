@@ -1,6 +1,7 @@
-package test
+package sponsor
 
 import (
+	"at/internal/services/reflink"
 	"fmt"
 	"net/http"
 	"testing"
@@ -9,7 +10,7 @@ import (
 const sponsorBaseURL = "http://localhost:8080/api/sponsor"
 
 func TestSponsorAPI(t *testing.T) {
-	tests := []TestResult{
+	tests := []reflink.TestResult{
 		testCreateSponsor(),
 		testGetSponsor(2),
 		testGetSponsors(),
@@ -26,27 +27,27 @@ func TestSponsorAPI(t *testing.T) {
 	}
 }
 
-func testCreateSponsor() TestResult {
+func testCreateSponsor() reflink.TestResult {
 	endpoint := fmt.Sprintf("%s", sponsorBaseURL)
 	payload := map[string]interface{}{
 		"telegram_link": "https://t.me/test",
 		"price_per_sub": 10.5,
 		"name":          "Test Sponsor",
 	}
-	return sendRequest(http.MethodPost, endpoint, payload)
+	return test.SendRequest(http.MethodPost, endpoint, payload)
 }
 
-func testGetSponsor(id int) TestResult {
+func testGetSponsor(id int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", sponsorBaseURL, id)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testGetSponsors() TestResult {
+func testGetSponsors() test.TestResult {
 	endpoint := fmt.Sprintf("%s/all", sponsorBaseURL)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testDeleteSponsor(id int) TestResult {
+func testDeleteSponsor(id int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", sponsorBaseURL, id)
-	return sendRequest(http.MethodDelete, endpoint, nil)
+	return test.SendRequest(http.MethodDelete, endpoint, nil)
 }

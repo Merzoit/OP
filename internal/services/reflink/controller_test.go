@@ -1,6 +1,7 @@
-package test
+package reflink
 
 import (
+	"at/test"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,17 +10,10 @@ import (
 	"testing"
 )
 
-type TestResult struct {
-	Method   string
-	Endpoint string
-	Status   string
-	Error    string
-}
-
 const baseURL = "http://localhost:8080/api/reflink"
 
 func TestReflinkAPI(t *testing.T) {
-	tests := []TestResult{
+	tests := []test.TestResult{
 		//testCreateLink(),
 		testGetLink(2),
 		testUpdateLink(2),
@@ -44,44 +38,44 @@ func TestReflinkAPI(t *testing.T) {
 			"worker_id":     6,
 			"referral_link": "test_ref",
 		}
-		return sendRequest(http.MethodPost, endpoint, payload)
+		return SendRequest(http.MethodPost, endpoint, payload)
 	}
 */
-func testGetLink(workerID int) TestResult {
+func testGetLink(workerID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", baseURL, workerID)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return SendRequest(http.MethodGet, endpoint, nil)
 }
 
-func testUpdateLink(workerID int) TestResult {
+func testUpdateLink(workerID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", baseURL, workerID)
 	payload := map[string]interface{}{
 		"tag": "updated_referral",
 	}
-	return sendRequest(http.MethodPatch, endpoint, payload)
+	return SendRequest(http.MethodPatch, endpoint, payload)
 }
 
-func testClickAdd(workerID int) TestResult {
+func testClickAdd(workerID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/clicks/%d", baseURL, workerID)
 	payload := map[string]interface{}{
 		"count": 5,
 	}
-	return sendRequest(http.MethodPatch, endpoint, payload)
+	return SendRequest(http.MethodPatch, endpoint, payload)
 }
 
-func testRegistrationAdd(workerID int) TestResult {
+func testRegistrationAdd(workerID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/registrations/%d", baseURL, workerID)
 	payload := map[string]interface{}{
 		"count": 3,
 	}
-	return sendRequest(http.MethodPatch, endpoint, payload)
+	return SendRequest(http.MethodPatch, endpoint, payload)
 }
 
-func sendRequest(method, endpoint string, payload map[string]interface{}) TestResult {
+func SendRequest(method, endpoint string, payload map[string]interface{}) test.TestResult {
 	var body io.Reader
 	if payload != nil {
 		jsonData, err := json.Marshal(payload)
 		if err != nil {
-			return TestResult{
+			return test.TestResult{
 				Method:   method,
 				Endpoint: endpoint,
 				Status:   "FAILED",
@@ -93,7 +87,7 @@ func sendRequest(method, endpoint string, payload map[string]interface{}) TestRe
 
 	req, err := http.NewRequest(method, endpoint, body)
 	if err != nil {
-		return TestResult{
+		return test.TestResult{
 			Method:   method,
 			Endpoint: endpoint,
 			Status:   "FAILED",
@@ -105,7 +99,7 @@ func sendRequest(method, endpoint string, payload map[string]interface{}) TestRe
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return TestResult{
+		return test.TestResult{
 			Method:   method,
 			Endpoint: endpoint,
 			Status:   "FAILED",
@@ -118,7 +112,7 @@ func sendRequest(method, endpoint string, payload map[string]interface{}) TestRe
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		status = "FAILED"
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return TestResult{
+		return test.TestResult{
 			Method:   method,
 			Endpoint: endpoint,
 			Status:   status,
@@ -126,7 +120,7 @@ func sendRequest(method, endpoint string, payload map[string]interface{}) TestRe
 		}
 	}
 
-	return TestResult{
+	return test.TestResult{
 		Method:   method,
 		Endpoint: endpoint,
 		Status:   status,

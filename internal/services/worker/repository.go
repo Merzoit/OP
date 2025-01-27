@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"database/sql"
 	"fmt"
@@ -37,13 +37,13 @@ func (repo *PgWorkerRepository) CreateWorker(worker *Worker) error {
 	var existingUserId int64
 	err := repo.db.QueryRow(context.Background(), checkUserQuery, worker.UserID).Scan(&existingUserId)
 	if err != nil {
-		if err.Error() == constants.ErrNoRows {
-			log.Warn().Msg(constants.ErrUserAlreadyExist)
-			return fmt.Errorf(constants.ErrUserAlreadyExist)
+		if err.Error() == errors.ErrNoRows {
+			log.Warn().Msg(errors.ErrUserAlreadyExist)
+			return fmt.Errorf(errors.ErrUserAlreadyExist)
 		}
 
-		log.Error().Err(err).Msgf(constants.ErrUserFetching)
-		return fmt.Errorf(constants.ErrUserFetching)
+		log.Warn().Err(err).Msgf(errors.ErrUserFetching)
+		return fmt.Errorf(errors.ErrUserFetching)
 	}
 
 	insertWorkerQuery := `
@@ -63,8 +63,8 @@ func (repo *PgWorkerRepository) CreateWorker(worker *Worker) error {
 	).Scan(&workerId)
 
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrWorkerCreate)
-		return fmt.Errorf(constants.ErrWorkerCreate)
+		log.Warn().Err(err).Msg(errors.ErrWorkerCreate)
+		return fmt.Errorf(errors.ErrWorkerCreate)
 	}
 
 	return nil
@@ -96,11 +96,11 @@ func (repo *PgWorkerRepository) GetWorker(workerID int) (*Worker, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Msg(constants.ErrWorkerNotFound)
-			return nil, fmt.Errorf(constants.ErrWorkerNotFound)
+			log.Warn().Err(err).Msg(errors.ErrWorkerNotFound)
+			return nil, fmt.Errorf(errors.ErrWorkerNotFound)
 		}
-		log.Error().Err(err).Msg(constants.ErrWorkerFetching)
-		return nil, fmt.Errorf(constants.ErrWorkerFetching)
+		log.Warn().Err(err).Msg(errors.ErrWorkerFetching)
+		return nil, fmt.Errorf(errors.ErrWorkerFetching)
 	}
 
 	return worker, nil
@@ -114,13 +114,13 @@ func (repo *PgWorkerRepository) DeleteWorker(workerID int) error {
 
 	worker, err := repo.db.Exec(context.Background(), query, workerID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrWorkerDelete)
-		return fmt.Errorf(constants.ErrWorkerDelete)
+		log.Warn().Err(err).Msg(errors.ErrWorkerDelete)
+		return fmt.Errorf(errors.ErrWorkerDelete)
 	}
 
 	if worker.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrWorkerNotFound)
-		return fmt.Errorf(constants.ErrWorkerNotFound)
+		log.Warn().Err(err).Msg(errors.ErrWorkerNotFound)
+		return fmt.Errorf(errors.ErrWorkerNotFound)
 	}
 
 	return nil
@@ -135,13 +135,13 @@ func (repo *PgWorkerRepository) UpdatePaymentRate(workerID int, rate float64) er
 
 	cmdTag, err := repo.db.Exec(context.Background(), query, rate, workerID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrWorkerUpdatePaymentRate)
-		return fmt.Errorf(constants.ErrWorkerUpdatePaymentRate)
+		log.Warn().Err(err).Msg(errors.ErrWorkerUpdatePaymentRate)
+		return fmt.Errorf(errors.ErrWorkerUpdatePaymentRate)
 	}
 
 	if cmdTag.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrWorkerNotFound)
-		return fmt.Errorf(constants.ErrWorkerNotFound)
+		log.Warn().Err(err).Msg(errors.ErrWorkerNotFound)
+		return fmt.Errorf(errors.ErrWorkerNotFound)
 	}
 
 	return nil
@@ -156,13 +156,13 @@ func (repo *PgWorkerRepository) BalanceUp(workerID int, count float64) error {
 
 	worker, err := repo.db.Exec(context.Background(), query, count, workerID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrWorkerBalanceUp)
-		return fmt.Errorf(constants.ErrWorkerBalanceUp)
+		log.Warn().Err(err).Msg(errors.ErrWorkerBalanceUp)
+		return fmt.Errorf(errors.ErrWorkerBalanceUp)
 	}
 
 	if worker.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrWorkerNotFound)
-		return fmt.Errorf(constants.ErrWorkerNotFound)
+		log.Warn().Err(err).Msg(errors.ErrWorkerNotFound)
+		return fmt.Errorf(errors.ErrWorkerNotFound)
 	}
 
 	return nil
@@ -177,13 +177,13 @@ func (repo *PgWorkerRepository) BalanceReset(workerID int) error {
 
 	cmdTag, err := repo.db.Exec(context.Background(), query, workerID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrWorkerBalanceReset)
-		return fmt.Errorf(constants.ErrWorkerBalanceReset)
+		log.Warn().Err(err).Msg(errors.ErrWorkerBalanceReset)
+		return fmt.Errorf(errors.ErrWorkerBalanceReset)
 	}
 
 	if cmdTag.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrWorkerNotFound)
-		return fmt.Errorf(constants.ErrWorkerNotFound)
+		log.Warn().Err(err).Msg(errors.ErrWorkerNotFound)
+		return fmt.Errorf(errors.ErrWorkerNotFound)
 	}
 
 	return nil

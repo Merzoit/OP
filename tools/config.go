@@ -3,54 +3,59 @@ package tools
 import (
 	"fmt"
 	"os"
-
-	"at/constants"
+	"strconv"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	App struct {
-		Port int `yaml:"port"`
-	} `yaml:"app"`
-	Database struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Name     string `yaml:"dbname"`
-	} `yaml:"database"`
+	AppPort      int
+	DatabaseHost string
+	DatabasePort int
+	DatabaseUser string
+	DatabasePass string
+	DatabaseName string
 }
 
 func (c *Config) Validate() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
-	if c.App.Port == 0 {
-		log.Error().Msg(constants.ErrConfigValidateAppPort)
-		return fmt.Errorf(constants.ErrConfigValidateAppPort)
+	if c.AppPort == 0 {
+		log.Warn().Msg("App port is not set")
+		return fmt.Errorf("app port is not set")
 	}
 
-	if c.Database.Host == "" || c.Database.Name == "" {
-		log.Error().Msg(constants.ErrConfigValidateDbHost)
-		return fmt.Errorf(constants.ErrConfigValidateDbHost)
+	if c.DatabaseHost == "" || c.DatabaseName == "" {
+		log.Warn().Msg("Database configuration is incomplete")
+		return fmt.Errorf("database configuration is incomplete")
 	}
 
 	log.Info().Msg("Configuration validation passed successfully")
 	return nil
 }
 
-func LoadConfig(path string) (*Config, error) {
-	file, err := os.Open(path)
+func LoadConfig() (*Config, error) {
+	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
-		return nil, err
+		log.Warn().Msg("Invalid app port")
+		return nil, fmt.Errorf("invalid app port: %w", err)
 	}
-	defer file.Close()
 
-	var config Config
-	decoder := yaml.NewDecoder(file)
+	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	if err != nil {
+		log.Warn().Msg("Invalid database port")
+		return nil, fmt.Errorf("invalid database port: %w", err)
+	}
 
-	err = decoder.Decode(&config)
-	return &config, err
+	config := &Config{
+		AppPort:      appPort,
+		DatabaseHost: os.Getenv("DB_HOST"),
+		DatabasePort: dbPort,
+		DatabaseUser: os.Getenv("DB_USER"),
+		DatabasePass: os.Getenv("DB_PASSWORD"),
+		DatabaseName: os.Getenv("DB_NAME"),
+	}
+
+	return config, nil
 }

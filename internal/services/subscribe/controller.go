@@ -1,8 +1,8 @@
 package subscribe
 
 import (
-	"at/constants"
 	"at/tools"
+	"at/tools/errors"
 	"encoding/json"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -20,14 +20,14 @@ func (sc *SubscribeController) AddSubscribe(w http.ResponseWriter, r *http.Reque
 	var sub Subscribe
 	err := json.NewDecoder(r.Body).Decode(&sub)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrDecodingRequestBody)
-		http.Error(w, constants.ErrDecodingRequestBody, http.StatusBadRequest)
+		log.Warn().Err(err).Msg(errors.ErrDecodingRequestBody)
+		http.Error(w, errors.ErrDecodingRequestBody, http.StatusBadRequest)
 		return
 	}
 
-	if err := sc.subRepo.AddSubscribe(&sub); err != nil {
-		log.Error().Err(err).Msgf("%v, %v", constants.ErrSubscribeCreate, sub)
-		http.Error(w, constants.ErrSubscribeCreate, http.StatusInternalServerError)
+	if sub, err := sc.subRepo.AddSubscribe(&sub); err != nil {
+		log.Warn().Err(err).Msgf("%v, %v", errors.ErrSubscribeCreate, sub)
+		http.Error(w, errors.ErrSubscribeCreate, http.StatusInternalServerError)
 		return
 	}
 
@@ -37,23 +37,23 @@ func (sc *SubscribeController) AddSubscribe(w http.ResponseWriter, r *http.Reque
 func (sc *SubscribeController) GetSubscribesByUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := tools.ExtractID(r.URL.Path)
 	if err != nil || userID <= 0 {
-		log.Error().Msg(constants.ErrExtractId)
-		http.Error(w, constants.ErrExtractId, http.StatusBadRequest)
+		log.Warn().Msg(errors.ErrExtractId)
+		http.Error(w, errors.ErrExtractId, http.StatusBadRequest)
 		return
 	}
 
 	subs, err := sc.subRepo.GetSubscribesByUser(uint(userID))
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSubscribesByUser)
-		http.Error(w, constants.ErrSubscribesByUser, http.StatusInternalServerError)
+		log.Warn().Err(err).Msg(errors.ErrSubscribesByUser)
+		http.Error(w, errors.ErrSubscribesByUser, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(subs)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrEncodingResponse)
-		http.Error(w, constants.ErrEncodingResponse, http.StatusInternalServerError)
+		log.Warn().Err(err).Msg(errors.ErrEncodingResponse)
+		http.Error(w, errors.ErrEncodingResponse, http.StatusInternalServerError)
 		return
 	}
 }
@@ -61,23 +61,23 @@ func (sc *SubscribeController) GetSubscribesByUser(w http.ResponseWriter, r *htt
 func (sc *SubscribeController) GetSubscribesBySponsor(w http.ResponseWriter, r *http.Request) {
 	sponsorID, err := tools.ExtractID(r.URL.Path)
 	if err != nil || sponsorID <= 0 {
-		log.Error().Msg(constants.ErrExtractId)
-		http.Error(w, constants.ErrExtractId, http.StatusBadRequest)
+		log.Warn().Msg(errors.ErrExtractId)
+		http.Error(w, errors.ErrExtractId, http.StatusBadRequest)
 		return
 	}
 
 	subs, err := sc.subRepo.GetSubscribesBySponsor(uint(sponsorID))
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSubscribesBySponsor)
-		http.Error(w, constants.ErrSubscribesBySponsor, http.StatusInternalServerError)
+		log.Warn().Err(err).Msg(errors.ErrSubscribesBySponsor)
+		http.Error(w, errors.ErrSubscribesBySponsor, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(subs)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrEncodingResponse)
-		http.Error(w, constants.ErrEncodingResponse, http.StatusInternalServerError)
+		log.Warn().Err(err).Msg(errors.ErrEncodingResponse)
+		http.Error(w, errors.ErrEncodingResponse, http.StatusInternalServerError)
 		return
 	}
 }

@@ -1,7 +1,7 @@
 package sponsor
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"database/sql"
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 type SponsorRepository interface {
-	CreateSponsor(sponsor *Sponsor) error
+	CreateSponsor(sponsor *Sponsor) (*Sponsor, error)
 	GetSponsor(tid uint64) (*Sponsor, error)
 	DeleteSponsor(tid uint64) error
 	GetSponsors() ([]*Sponsor, error)
@@ -24,7 +24,7 @@ func NewPgSponsorRepository(db *pgxpool.Pool) SponsorRepository {
 	return &PgSponsorRepository{db: db}
 }
 
-func (repo *PgSponsorRepository) CreateSponsor(sponsor *Sponsor) error {
+func (repo *PgSponsorRepository) CreateSponsor(sponsor *Sponsor) (*Sponsor, error) {
 	query := `
 	INSERT INTO sponsors 
 	(telegram_link, price_per_sub, name)
@@ -41,11 +41,11 @@ func (repo *PgSponsorRepository) CreateSponsor(sponsor *Sponsor) error {
 	).Scan(&sponsor.ID)
 
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSponsorCreate)
-		return fmt.Errorf(constants.ErrSponsorCreate)
+		log.Warn().Err(err).Msg(errors.ErrSponsorCreate)
+		return nil, fmt.Errorf(errors.ErrSponsorCreate)
 	}
 
-	return nil
+	return sponsor, nil
 }
 
 func (repo *PgSponsorRepository) GetSponsor(tid uint64) (*Sponsor, error) {
@@ -67,12 +67,12 @@ func (repo *PgSponsorRepository) GetSponsor(tid uint64) (*Sponsor, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Error().Err(err).Msg(constants.ErrSponsorNotFound)
-			return nil, fmt.Errorf(constants.ErrSponsorNotFound)
+			log.Warn().Err(err).Msg(errors.ErrSponsorNotFound)
+			return nil, fmt.Errorf(errors.ErrSponsorNotFound)
 		}
 
-		log.Error().Err(err).Msg(constants.ErrSponsorFetching)
-		return nil, fmt.Errorf(constants.ErrSponsorFetching)
+		log.Warn().Err(err).Msg(errors.ErrSponsorFetching)
+		return nil, fmt.Errorf(errors.ErrSponsorFetching)
 	}
 
 	return sponsor, nil
@@ -86,13 +86,13 @@ func (repo *PgSponsorRepository) DeleteSponsor(tid uint64) error {
 
 	sponsor, err := repo.db.Exec(context.Background(), query, tid)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSponsorDelete)
-		return fmt.Errorf(constants.ErrSponsorDelete)
+		log.Warn().Err(err).Msg(errors.ErrSponsorDelete)
+		return fmt.Errorf(errors.ErrSponsorDelete)
 	}
 
 	if sponsor.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrSponsorNotFound)
-		return fmt.Errorf(constants.ErrSponsorNotFound)
+		log.Warn().Err(err).Msg(errors.ErrSponsorNotFound)
+		return fmt.Errorf(errors.ErrSponsorNotFound)
 	}
 
 	return nil
@@ -106,8 +106,8 @@ func (repo *PgSponsorRepository) GetSponsors() ([]*Sponsor, error) {
 
 	rows, err := repo.db.Query(context.Background(), query)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrSponsorsGet)
-		return nil, fmt.Errorf(constants.ErrSponsorsGet)
+		log.Warn().Err(err).Msg(errors.ErrSponsorsGet)
+		return nil, fmt.Errorf(errors.ErrSponsorsGet)
 	}
 	defer rows.Close()
 
@@ -122,15 +122,15 @@ func (repo *PgSponsorRepository) GetSponsors() ([]*Sponsor, error) {
 			&sponsor.CreatedAt,
 		)
 		if err != nil {
-			log.Error().Err(err).Msg(constants.ErrSponsorScan)
-			return nil, fmt.Errorf(constants.ErrSponsorScan)
+			log.Warn().Err(err).Msg(errors.ErrSponsorScan)
+			return nil, fmt.Errorf(errors.ErrSponsorScan)
 		}
 		sponsors = append(sponsors, sponsor)
 	}
 
 	if rows.Err() != nil {
-		log.Error().Err(err).Msg(constants.ErrSponsorsIterate)
-		return nil, fmt.Errorf(constants.ErrSponsorsIterate)
+		log.Warn().Err(err).Msg(errors.ErrSponsorsIterate)
+		return nil, fmt.Errorf(errors.ErrSponsorsIterate)
 	}
 
 	return sponsors, nil

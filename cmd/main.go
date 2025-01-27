@@ -6,12 +6,13 @@ import (
 	"at/internal/services/role"
 	"at/internal/services/sponsor"
 	"at/internal/services/subscribe"
+	"at/tools/errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"net/http"
 	"os"
 
-	"at/constants"
 	internal "at/internal/database"
 	"at/internal/routers"
 	user "at/internal/services/user"
@@ -22,29 +23,28 @@ import (
 )
 
 func main() {
-
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 	log.Info().Msg("Starting application...")
 
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "../configs/config.yaml"
-	}
-
-	config, err := tools.LoadConfig(configPath)
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatal().Err(err).Msg(constants.ErrConfigLoad)
+		log.Fatal().Err(err).Msgf(errors.ErrEnvLoading)
 	}
 
-	if err := config.Validate(); err != nil {
-		log.Fatal().Err(err).Msg(constants.ErrConfigValidate)
-	}
-
-	log.Info().Msg(fmt.Sprintf("Application starting on port %d", config.App.Port))
-
-	db, err := internal.Connect(config)
+	connectionString, err := tools.LoadConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to the database")
+		log.Fatal().Err(err).Msg(errors.ErrConnectionString)
+	}
+
+	if err := connectionString.Validate(); err != nil {
+		log.Fatal().Err(err).Msg(errors.ErrConnectionStringValidate)
+	}
+
+	log.Info().Msg(fmt.Sprintf("Application starting on port %d", connectionString.AppPort))
+
+	db, err := internal.Connect(connectionString)
+	if err != nil {
+		log.Fatal().Err(err).Msg(errors.ErrDbConnect)
 	}
 	defer db.Close()
 
@@ -65,17 +65,7 @@ func main() {
 
 	subRepo := subscribe.NewPgSubscribeRepository(db)
 	subController := subscribe.NewSubscribeController(subRepo)
-	//ts.TestDbSponsorCreate(db)
-	//ts.TestDbSponsorsGet(db)
-	//tc.TestDbCodeDelete(db)
-	//+tc.TestDbCodeCreate(db)
-	//+tc.TestDbCodeGet(db)
-	//test.TestDbUserCreate(db)
-	//test.TestDbUserGet(db)
-	//tw.TestDbWorkerCreate(db)
-	//tw.TestDbWorkerGet(db)
-	//tr.TestDbRoleGet(db)
-	//router := routers.InitRouter(userController)
+
 	router := mux.NewRouter()
 	routers.RegisterUserRoutes(router, userController)
 	routers.RegisterCodeRoutes(router, codeController)
@@ -84,5 +74,5 @@ func main() {
 	routers.RegisterSponsorRoutes(router, sponsorController)
 	routers.RegisterSubscribeRoutes(router, subController)
 
-	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", config.App.Port), router)).Msg("HTTP server stopped")
+	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", connectionString.AppPort), router)).Msg("HTTP server stopped")
 }

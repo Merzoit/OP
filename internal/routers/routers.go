@@ -14,13 +14,13 @@ import (
 
 func RegisterUserRoutes(router *mux.Router, uc *user.UserController) {
 	ur := router.PathPrefix("/api/user").Subrouter()
-	ur.HandleFunc("", uc.CreateUser).Methods(http.MethodPost)
+	ur.HandleFunc("/create", uc.CreateUser).Methods(http.MethodPost)
 	ur.HandleFunc("/{id}", uc.GetUser).Methods(http.MethodGet)
 }
 
 func RegisterCodeRoutes(router *mux.Router, controller *code.CodeController) {
 	cr := router.PathPrefix("/api/code").Subrouter()
-	cr.HandleFunc("", controller.CreateCode).Methods("POST")
+	cr.HandleFunc("/create", controller.CreateCode).Methods("POST")
 	cr.HandleFunc("/{accessCode}", controller.GetCode).Methods("GET")
 	cr.HandleFunc("/{accessCode}", controller.DeleteCode).Methods("DELETE")
 	cr.HandleFunc("/increment/{accessCode}", controller.AddRequestCount).Methods("PATCH")
@@ -29,7 +29,7 @@ func RegisterCodeRoutes(router *mux.Router, controller *code.CodeController) {
 
 func RegisterReflinkRoutes(router *mux.Router, controller *reflink.RefLinkController) {
 	rlr := router.PathPrefix("/api/reflink").Subrouter()
-	rlr.HandleFunc("", controller.CreateLink).Methods("POST")
+	rlr.HandleFunc("/create", controller.CreateLink).Methods("POST")
 	rlr.HandleFunc("/{workerID}", controller.GetLink).Methods("GET")
 	rlr.HandleFunc("/{workerID}", controller.UpdateLink).Methods("PATCH")
 	rlr.HandleFunc("/clicks/{workerID}", controller.ClickAdd).Methods("PATCH")
@@ -43,7 +43,7 @@ func RegisterRoleRoutes(router *mux.Router, controller *role.RoleController) {
 
 func RegisterSponsorRoutes(router *mux.Router, sc *sponsor.SponsorController) {
 	sr := router.PathPrefix("/api/sponsor").Subrouter()
-	sr.HandleFunc("", sc.CreateSponsor).Methods(http.MethodPost)
+	sr.HandleFunc("/create", sc.CreateSponsor).Methods(http.MethodPost)
 	sr.HandleFunc("/all", sc.GetSponsors).Methods(http.MethodGet)
 	sr.HandleFunc("/{id}", sc.GetSponsor).Methods(http.MethodGet)
 	sr.HandleFunc("/{id}", sc.DeleteSponsor).Methods(http.MethodDelete)
@@ -51,7 +51,7 @@ func RegisterSponsorRoutes(router *mux.Router, sc *sponsor.SponsorController) {
 
 func RegisterSubscribeRoutes(router *mux.Router, controller *subscribe.SubscribeController) {
 	rsr := router.PathPrefix("/api/subscribe").Subrouter()
-	rsr.HandleFunc("", controller.AddSubscribe).Methods("POST")
+	rsr.HandleFunc("/create", controller.AddSubscribe).Methods("POST")
 	rsr.HandleFunc("/user/{id}", controller.GetSubscribesByUser).Methods("GET")
 	rsr.HandleFunc("/sponsor/{id}", controller.GetSubscribesBySponsor).Methods("GET")
 }

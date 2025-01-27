@@ -1,8 +1,8 @@
 package role
 
 import (
-	"at/constants"
 	"at/tools"
+	"at/tools/errors"
 	"encoding/json"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -19,22 +19,22 @@ func NewRoleController(repo RoleRepository) *RoleController {
 func (rc *RoleController) GetRole(w http.ResponseWriter, r *http.Request) {
 	id, err := tools.ExtractID(r.URL.Path)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrExtractId)
-		http.Error(w, constants.ErrExtractId, http.StatusBadRequest)
+		log.Warn().Err(err).Msg(errors.ErrExtractId)
+		http.Error(w, errors.ErrExtractId, http.StatusBadRequest)
 		return
 	}
 
 	role, err := rc.roleRepo.GetRole(uint(id))
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrRoleFetching)
-		http.Error(w, constants.ErrRoleFetching, http.StatusInternalServerError)
+		log.Warn().Err(err).Msg(errors.ErrRoleFetching)
+		http.Error(w, errors.ErrRoleFetching, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(role)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrEncodingResponse)
+		log.Warn().Err(err).Msg(errors.ErrEncodingResponse)
 		return
 	}
 }

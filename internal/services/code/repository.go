@@ -1,7 +1,7 @@
 package code
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"fmt"
 	"time"
@@ -11,7 +11,7 @@ import (
 )
 
 type CodeRepository interface {
-	CreateCode(code *Code) error
+	CreateCode(code *Code) (*Code, error)
 	GetCode(code int) (*Code, error)
 	GetCodesByWorker(workerID uint) ([]*Code, error)
 	DeleteCode(code int) error
@@ -26,7 +26,7 @@ func NewPgCodeRepository(db *pgxpool.Pool) CodeRepository {
 	return &PgCodeRepository{db: db}
 }
 
-func (repo *PgCodeRepository) CreateCode(code *Code) error {
+func (repo *PgCodeRepository) CreateCode(code *Code) (*Code, error) {
 
 	checkQuery := `
 	SELECT id
@@ -38,11 +38,11 @@ func (repo *PgCodeRepository) CreateCode(code *Code) error {
 	err := repo.db.QueryRow(context.Background(), checkQuery, code.AccessCode).Scan(&id)
 
 	if err == nil {
-		log.Warn().Msg(constants.ErrCodeAlreadyExist)
-		return nil
-	} else if err.Error() != constants.ErrNoRows {
-		log.Error().Err(err).Msg(constants.ErrCodeCheck)
-		return fmt.Errorf(constants.ErrCodeCheck)
+		log.Warn().Msg(errors.ErrCodeAlreadyExist)
+		return nil, fmt.Errorf(errors.ErrCodeAlreadyExist)
+	} else if err.Error() != errors.ErrNoRows {
+		log.Warn().Err(err).Msg(errors.ErrCodeCheck)
+		return nil, fmt.Errorf(errors.ErrCodeCheck)
 	}
 
 	insertQuery := `
@@ -57,11 +57,11 @@ func (repo *PgCodeRepository) CreateCode(code *Code) error {
 	).Scan(&id)
 
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrCodeCreate)
-		return fmt.Errorf(constants.ErrCodeCreate)
+		log.Warn().Err(err).Msg(errors.ErrCodeCreate)
+		return nil, fmt.Errorf(errors.ErrCodeCreate)
 	}
 
-	return nil
+	return code, nil
 }
 
 func (repo *PgCodeRepository) GetCode(code int) (*Code, error) {
@@ -84,8 +84,8 @@ func (repo *PgCodeRepository) GetCode(code int) (*Code, error) {
 	)
 
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrCodeFetching)
-		return nil, fmt.Errorf(constants.ErrCodeFetching)
+		log.Warn().Err(err).Msg(errors.ErrCodeFetching)
+		return nil, fmt.Errorf(errors.ErrCodeFetching)
 	}
 
 	return c, nil
@@ -100,8 +100,8 @@ func (repo *PgCodeRepository) GetCodesByWorker(workerID uint) ([]*Code, error) {
 
 	rows, err := repo.db.Query(context.Background(), query, workerID)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrCodeFetchingByWorker)
-		return nil, fmt.Errorf(constants.ErrCodeFetchingByWorker)
+		log.Warn().Err(err).Msg(errors.ErrCodeFetchingByWorker)
+		return nil, fmt.Errorf(errors.ErrCodeFetchingByWorker)
 	}
 	defer rows.Close()
 
@@ -119,15 +119,15 @@ func (repo *PgCodeRepository) GetCodesByWorker(workerID uint) ([]*Code, error) {
 			&code.CreatedAt,
 		)
 		if err != nil {
-			log.Error().Err(err).Msg(constants.ErrCodeScan)
-			return nil, fmt.Errorf(constants.ErrCodeScan)
+			log.Warn().Err(err).Msg(errors.ErrCodeScan)
+			return nil, fmt.Errorf(errors.ErrCodeScan)
 		}
 		codes = append(codes, code)
 	}
 
 	if rows.Err() != nil {
-		log.Error().Err(rows.Err()).Msg(constants.ErrCodesIterate)
-		return nil, fmt.Errorf(constants.ErrCodesIterate)
+		log.Warn().Err(rows.Err()).Msg(errors.ErrCodesIterate)
+		return nil, fmt.Errorf(errors.ErrCodesIterate)
 	}
 
 	return codes, nil
@@ -140,12 +140,10 @@ func (repo *PgCodeRepository) DeleteCode(code int) error {
 	WHERE access_code=$1
 	`
 
-	log.Info().Msgf(constants.CallRepoDeleteCode, code)
-
 	_, err := repo.db.Exec(context.Background(), query, code)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrCodeDelete)
-		return fmt.Errorf("%v: %v", constants.ErrCodeDelete, err)
+		log.Warn().Err(err).Msg(errors.ErrCodeDelete)
+		return fmt.Errorf("%v: %v", errors.ErrCodeDelete, err)
 	}
 
 	return err
@@ -160,13 +158,13 @@ func (repo *PgCodeRepository) AddRequestCount(accessCode, i int) error {
 
 	code, err := repo.db.Exec(context.Background(), query, accessCode, i)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrCodeRequestCounter)
-		return fmt.Errorf(constants.ErrCodeRequestCounter)
+		log.Warn().Err(err).Msg(errors.ErrCodeRequestCounter)
+		return fmt.Errorf(errors.ErrCodeRequestCounter)
 	}
 
 	if code.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrCodeNotFound)
-		return fmt.Errorf(constants.ErrCodeNotFound)
+		log.Warn().Err(err).Msg(errors.ErrCodeNotFound)
+		return fmt.Errorf(errors.ErrCodeNotFound)
 	}
 
 	return nil

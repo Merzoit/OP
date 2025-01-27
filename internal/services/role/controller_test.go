@@ -1,6 +1,7 @@
-package test
+package role
 
 import (
+	"at/internal/services/reflink"
 	"fmt"
 	"net/http"
 	"testing"
@@ -9,7 +10,7 @@ import (
 const roleBaseURL = "http://localhost:8080/api/role"
 
 func TestRoleAPI(t *testing.T) {
-	tests := []TestResult{
+	tests := []reflink.TestResult{
 		testGetRole(1),
 	}
 
@@ -23,7 +24,7 @@ func TestRoleAPI(t *testing.T) {
 	}
 }
 
-func testGetRole(roleID int) TestResult {
+func testGetRole(roleID int) test.TestResult {
 	endpoint := fmt.Sprintf("%s/%d", roleBaseURL, roleID)
-	return sendRequest(http.MethodGet, endpoint, nil)
+	return test.SendRequest(http.MethodGet, endpoint, nil)
 }

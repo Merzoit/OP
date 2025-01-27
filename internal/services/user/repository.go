@@ -1,7 +1,7 @@
 package services
 
 import (
-	"at/constants"
+	"at/tools/errors"
 	"context"
 	"database/sql"
 	"fmt"
@@ -32,7 +32,6 @@ func (repo *PgUserRepository) GetUser(tid uint64) (*User, error) {
 	WHERE telegram_id=$1
 	`
 
-	log.Info().Msgf(constants.CallRepoGetUserById, tid)
 	err := repo.db.QueryRow(context.Background(), query, tid).Scan(
 		&user.ID,
 		&user.TelegramID,
@@ -41,13 +40,14 @@ func (repo *PgUserRepository) GetUser(tid uint64) (*User, error) {
 		&user.IsBanned,
 		&user.CreatedAt,
 	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Msg(constants.ErrUserNotFound)
-			return nil, fmt.Errorf(constants.ErrUserNotFound)
+			log.Warn().Err(err).Msg(errors.ErrUserNotFound)
+			return nil, fmt.Errorf(errors.ErrUserNotFound)
 		}
-		log.Error().Err(err).Msg(constants.ErrUserFetching)
-		return nil, fmt.Errorf(constants.ErrUserFetching)
+		log.Warn().Err(err).Msg(errors.ErrUserFetching)
+		return nil, fmt.Errorf(errors.ErrUserFetching)
 	}
 
 	return user, nil
@@ -62,8 +62,6 @@ func (repo *PgUserRepository) CreateUser(user *User) error {
 	RETURNING telegram_id
 	`
 
-	log.Info().Msgf(constants.CallRepoCreateUser, user.TelegramID)
-
 	var returnedID uint64
 	err := repo.db.QueryRow(
 		context.Background(), query,
@@ -71,16 +69,15 @@ func (repo *PgUserRepository) CreateUser(user *User) error {
 	).Scan(&returnedID)
 
 	if err != nil {
-		if err.Error() == constants.ErrNoRows {
-			log.Warn().Msg(constants.ErrUserAlreadyExist)
-			return fmt.Errorf(constants.ErrUserAlreadyExist)
+		if err.Error() == errors.ErrNoRows {
+			log.Warn().Msg(errors.ErrUserAlreadyExist)
+			return fmt.Errorf(errors.ErrUserAlreadyExist)
 		}
 
-		log.Error().Err(err).Msgf(constants.ErrUserCreate)
-		return fmt.Errorf(constants.ErrUserCreate)
+		log.Warn().Err(err).Msgf(errors.ErrUserCreate)
+		return fmt.Errorf(errors.ErrUserCreate)
 	}
 
-	log.Info().Msgf(constants.SuccessfullyUserCreate, returnedID)
 	return nil
 }
 
@@ -93,13 +90,13 @@ func (repo *PgUserRepository) BanUser(tid uint64) error {
 
 	user, err := repo.db.Exec(context.Background(), query, tid)
 	if err != nil {
-		log.Error().Err(err).Msg(constants.ErrUserBanned)
-		return fmt.Errorf(constants.ErrUserBanned)
+		log.Warn().Err(err).Msg(errors.ErrUserBanned)
+		return fmt.Errorf(errors.ErrUserBanned)
 	}
 
 	if user.RowsAffected() == 0 {
-		log.Error().Err(err).Msg(constants.ErrUserNotFound)
-		return fmt.Errorf(constants.ErrUserNotFound)
+		log.Warn().Err(err).Msg(errors.ErrUserNotFound)
+		return fmt.Errorf(errors.ErrUserNotFound)
 	}
 
 	return nil
