@@ -8,7 +8,8 @@ import (
 	"at/internal/services/subscribe"
 	"at/tools/errors"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
@@ -66,7 +67,10 @@ func main() {
 	subRepo := subscribe.NewPgSubscribeRepository(db)
 	subController := subscribe.NewSubscribeController(subRepo)
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+
 	routers.RegisterUserRoutes(router, userController)
 	routers.RegisterCodeRoutes(router, codeController)
 	routers.RegisterReflinkRoutes(router, reflinkController)

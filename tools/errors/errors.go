@@ -12,9 +12,11 @@ const (
 	ErrConnectionStringValidate = "connection string validation failed"
 	//DB
 
-	ErrDbParseConfig = "failed to parse database config"
-	ErrDbConnect     = "failed to connect to database"
-	ErrDbPing        = "failed to ping database"
+	ErrDbParseConfig     = "failed to parse database config"
+	ErrDbConnect         = "failed to connect to database"
+	ErrDbPing            = "failed to ping database"
+	ErrBeginTransaction  = "failed to begin transaction"
+	ErrCommitTransaction = "failed to commit transaction"
 
 	//USER
 

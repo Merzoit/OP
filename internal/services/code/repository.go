@@ -27,6 +27,12 @@ func NewPgCodeRepository(db *pgxpool.Pool) CodeRepository {
 }
 
 func (repo *PgCodeRepository) CreateCode(code *Code) (*Code, error) {
+	tx, err := repo.db.Begin(context.Background())
+	if err != nil {
+		log.Warn().Err(err).Msg(errors.ErrBeginTransaction)
+		return nil, err
+	}
+	tx.Rollback(context.Background())
 
 	checkQuery := `
 	SELECT id
@@ -35,10 +41,10 @@ func (repo *PgCodeRepository) CreateCode(code *Code) (*Code, error) {
 	`
 
 	var id int
-	err := repo.db.QueryRow(context.Background(), checkQuery, code.AccessCode).Scan(&id)
+	err = tx.QueryRow(context.Background(), checkQuery, code.AccessCode).Scan(&id)
 
 	if err == nil {
-		log.Warn().Msg(errors.ErrCodeAlreadyExist)
+		log.Warn().Err(err).Msg(errors.ErrCodeAlreadyExist)
 		return nil, fmt.Errorf(errors.ErrCodeAlreadyExist)
 	} else if err.Error() != errors.ErrNoRows {
 		log.Warn().Err(err).Msg(errors.ErrCodeCheck)
@@ -51,7 +57,7 @@ func (repo *PgCodeRepository) CreateCode(code *Code) (*Code, error) {
 	RETURNING id
 	`
 
-	err = repo.db.QueryRow(
+	err = tx.QueryRow(
 		context.Background(), insertQuery, code.AccessCode, code.Title,
 		code.Year, code.Description, code.AddedByWorkerID, code.RequestCount, time.Now(),
 	).Scan(&id)
@@ -61,6 +67,13 @@ func (repo *PgCodeRepository) CreateCode(code *Code) (*Code, error) {
 		return nil, fmt.Errorf(errors.ErrCodeCreate)
 	}
 
+	err = tx.Commit(context.Background())
+	if err != nil {
+		log.Warn().Err(err).Msg(errors.ErrCommitTransaction)
+		return nil, err
+	}
+
+	code.Id = id
 	return code, nil
 }
 
